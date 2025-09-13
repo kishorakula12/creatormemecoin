@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { RefreshCw, Sparkles } from 'lucide-react';
+import { fetchCommunityData, getCommunityImages } from '../api/community-data';
 
 interface Template {
   id: string;
@@ -24,21 +25,25 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Mock API call - replace with your actual API endpoint
+  // Real API call to creatorcommunity.xyz
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Try to fetch real data from creator community
+      const realTemplates = await fetchCommunityData('/api/templates');
       
-      // Mock data - replace with actual API call
-      const mockTemplates: Template[] = [
+      if (realTemplates && realTemplates.length > 0) {
+        setTemplates(realTemplates);
+      } else {
+        // Fallback to community-inspired templates with real images
+        const communityImages = await getCommunityImages();
+        const communityTemplates: Template[] = [
         {
           id: '1',
           name: 'Cosmic Portal',
           category: 'Fantasy & Magic',
-          thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center',
+          thumbnail: communityImages?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop&crop=center',
+          image: communityImages?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center',
           tags: ['fantasy', 'magic', 'portal', 'cosmic'],
           trending: true,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -48,8 +53,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '2',
           name: 'Reaching for Stars',
           category: 'Aspiration & Goals',
-          thumbnail: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop&crop=center',
+          thumbnail: communityImages?.[1] || 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&h=200&fit=crop&crop=center',
+          image: communityImages?.[1] || 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop&crop=center',
           tags: ['goals', 'aspiration', 'stars', 'motivation'],
           trending: true,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -59,8 +64,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '3',
           name: 'Just Create',
           category: 'Motivation & Action',
-          thumbnail: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center',
+          thumbnail: communityImages?.[2] || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center',
+          image: communityImages?.[2] || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center',
           tags: ['create', 'motivation', 'action', 'inspiration'],
           trending: false,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -70,8 +75,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '4',
           name: 'Sparkle Effect',
           category: 'Highlight & Shine',
-          thumbnail: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop&crop=center',
+          thumbnail: communityImages?.[3] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=300&h=200&fit=crop&crop=center',
+          image: communityImages?.[3] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop&crop=center',
           tags: ['sparkle', 'shine', 'highlight', 'effect'],
           trending: false,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -122,13 +127,33 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
     fetchTemplates();
   }, []);
 
-  // Auto-refresh every 5 minutes
+  // Real-time updates every 2 minutes to catch new templates from community
   useEffect(() => {
     const interval = setInterval(() => {
       fetchTemplates();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 2 * 60 * 1000); // 2 minutes for templates
 
-    return () => clearInterval(interval);
+    // WebSocket connection for instant updates when new templates are added
+    const ws = new WebSocket('wss://creatorcommunity.xyz/ws/templates');
+    
+    ws.onmessage = (event) => {
+      try {
+        const newTemplate = JSON.parse(event.data);
+        setTemplates(prev => [newTemplate, ...prev.slice(0, 7)]); // Keep only latest 8
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.log('WebSocket message parsing error:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.log('WebSocket connection error:', error);
+    };
+
+    return () => {
+      clearInterval(interval);
+      ws.close();
+    };
   }, []);
 
   const handleRefresh = () => {
