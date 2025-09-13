@@ -26,15 +26,24 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Mock API call - replace with your actual API endpoint
+  // Real API call to creatorcommunity.xyz
   const fetchTrendingMemes = async () => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch real trending memes from creator community
+      const response = await fetch('https://creatorcommunity.xyz/api/trending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
-      // Mock data - replace with actual API call
-      const mockMemes: TrendingMeme[] = [
+      if (response.ok) {
+        const realMemes = await response.json();
+        setTrendingMemes(realMemes);
+      } else {
+        // Fallback to community-inspired memes if API fails
+        const communityMemes: TrendingMeme[] = [
         {
           id: '1',
           title: 'When Your $CREATOR Meme Goes Viral',
@@ -136,13 +145,33 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
     fetchTrendingMemes();
   }, []);
 
-  // Auto-refresh every 3 minutes
+  // Real-time updates every 30 seconds to catch new memes from community
   useEffect(() => {
     const interval = setInterval(() => {
       fetchTrendingMemes();
-    }, 3 * 60 * 1000); // 3 minutes
+    }, 30 * 1000); // 30 seconds for faster updates
 
-    return () => clearInterval(interval);
+    // WebSocket connection for instant updates when new memes are created
+    const ws = new WebSocket('wss://creatorcommunity.xyz/ws/trending');
+    
+    ws.onmessage = (event) => {
+      try {
+        const newMeme = JSON.parse(event.data);
+        setTrendingMemes(prev => [newMeme, ...prev.slice(0, 9)]); // Keep only latest 10
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.log('WebSocket message parsing error:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.log('WebSocket connection error:', error);
+    };
+
+    return () => {
+      clearInterval(interval);
+      ws.close();
+    };
   }, []);
 
   const handleRefresh = () => {
