@@ -10,6 +10,10 @@ export default function Home() {
   const [fontSize, setFontSize] = useState(32);
   const [textColor, setTextColor] = useState("#ffffff");
   const [selectedImage, setSelectedImage] = useState("");
+  const [textLayers, setTextLayers] = useState([
+    { id: 1, text: "", x: 50, y: 50, fontSize: 32, color: "#ffffff", isActive: true }
+  ]);
+  const [activeLayerId, setActiveLayerId] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTemplateSelect = (template: { image: string }) => {
@@ -18,6 +22,43 @@ export default function Home() {
 
   const handleTrendingMemeSelect = (meme: { image: string }) => {
     setSelectedImage(meme.image);
+  };
+
+  const addTextLayer = () => {
+    const newId = Math.max(...textLayers.map(layer => layer.id)) + 1;
+    setTextLayers([...textLayers, { 
+      id: newId, 
+      text: "", 
+      x: 50, 
+      y: 50, 
+      fontSize: 32, 
+      color: "#ffffff", 
+      isActive: false 
+    }]);
+    setActiveLayerId(newId);
+  };
+
+  const removeTextLayer = (id: number) => {
+    if (textLayers.length > 1) {
+      const newLayers = textLayers.filter(layer => layer.id !== id);
+      setTextLayers(newLayers);
+      if (activeLayerId === id) {
+        setActiveLayerId(newLayers[0].id);
+      }
+    }
+  };
+
+  const updateTextLayer = (id: number, updates: Partial<{ text: string; x: number; y: number; fontSize: number; color: string; isActive: boolean }>) => {
+    setTextLayers(textLayers.map(layer => 
+      layer.id === id ? { ...layer, ...updates } : layer
+    ));
+  };
+
+  const setActiveLayer = (id: number) => {
+    setActiveLayerId(id);
+    setTextLayers(textLayers.map(layer => 
+      ({ ...layer, isActive: layer.id === id })
+    ));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,23 +84,23 @@ export default function Home() {
       if (ctx) {
         ctx.drawImage(img, 0, 0);
         
-        // Draw top text
-        ctx.fillStyle = textColor;
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 4;
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        
-        const topY = 20;
-        ctx.strokeText(topText, canvas.width / 2, topY);
-        ctx.fillText(topText, canvas.width / 2, topY);
-        
-        // Draw bottom text
-        ctx.textBaseline = 'bottom';
-        const bottomY = canvas.height - 20;
-        ctx.strokeText(bottomText, canvas.width / 2, bottomY);
-        ctx.fillText(bottomText, canvas.width / 2, bottomY);
+        // Draw all text layers
+        textLayers.forEach((layer) => {
+          if (layer.text.trim()) {
+            ctx.fillStyle = layer.color;
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 4;
+            ctx.font = `bold ${layer.fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const x = (layer.x / 100) * canvas.width;
+            const y = (layer.y / 100) * canvas.height;
+            
+            ctx.strokeText(layer.text, x, y);
+            ctx.fillText(layer.text, x, y);
+          }
+        });
         
         // Download
         const link = document.createElement('a');
@@ -153,8 +194,8 @@ export default function Home() {
         {/* Links Section */}
         <section id="contact" className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">Connect With Us</h2>
-          <div className="max-w-4xl mx-auto bg-gray-50 rounded-lg p-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="max-w-6xl mx-auto bg-gray-50 rounded-lg p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
@@ -208,6 +249,24 @@ export default function Home() {
                   Visit Website
                 </a>
               </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Community</h3>
+                <p className="text-gray-600 mb-4">Join our Twitter community</p>
+                <a 
+                  href="https://twitter.com/i/communities/1963782808356221318" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  Join Community
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -237,46 +296,90 @@ export default function Home() {
                 className="hidden"
               />
               
-              {/* Browse Templates Button */}
-              <a
-                href="https://creatorcommunity.xyz/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg font-medium mb-6 flex items-center justify-center space-x-2 hover:bg-orange-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                <span>Browse Templates</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
+              {/* Browse Templates and Stickers Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <a
+                  href="https://creatorcommunity.xyz/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-orange-500 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 hover:bg-orange-600 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  <span>Browse Templates</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+                
+                <a
+                  href="https://emoji.gg/stickers/meme"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-purple-500 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 hover:bg-purple-600 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Get Stickers</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
               
-              {/* Text Inputs */}
+              {/* Text Layers Management */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">TOP TEXT</label>
-                  <input
-                    type="text"
-                    value={topText}
-                    onChange={(e) => setTopText(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter top text"
-                  />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Text Layers</h3>
+                  <button
+                    onClick={addTextLayer}
+                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Add Text</span>
+                  </button>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">BOTTOM TEXT</label>
-                  <input
-                    type="text"
-                    value={bottomText}
-                    onChange={(e) => setBottomText(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter bottom text"
-                  />
+
+                {/* Text Layer List */}
+                <div className="space-y-2">
+                  {textLayers.map((layer) => (
+                    <div key={layer.id} className={`p-3 border rounded-lg ${layer.isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Text Layer {layer.id}</span>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setActiveLayer(layer.id)}
+                            className={`px-2 py-1 text-xs rounded ${layer.isActive ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                          >
+                            {layer.isActive ? 'Active' : 'Select'}
+                          </button>
+                          {textLayers.length > 1 && (
+                            <button
+                              onClick={() => removeTextLayer(layer.id)}
+                              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={layer.text}
+                        onChange={(e) => updateTextLayer(layer.id, { text: e.target.value })}
+                        placeholder={`Enter text for layer ${layer.id}...`}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  ))}
                 </div>
-                
+              </div>
+              
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Font Style</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -288,13 +391,19 @@ export default function Home() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Font Size: {fontSize}px</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Font Size: {textLayers.find(l => l.id === activeLayerId)?.fontSize || fontSize}px
+                  </label>
                   <input
                     type="range"
                     min="16"
                     max="64"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    value={textLayers.find(l => l.id === activeLayerId)?.fontSize || fontSize}
+                    onChange={(e) => {
+                      const newSize = Number(e.target.value);
+                      setFontSize(newSize);
+                      updateTextLayer(activeLayerId, { fontSize: newSize });
+                    }}
                     className="w-full"
                   />
                 </div>
@@ -303,8 +412,12 @@ export default function Home() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
                   <input
                     type="color"
-                    value={textColor}
-                    onChange={(e) => setTextColor(e.target.value)}
+                    value={textLayers.find(l => l.id === activeLayerId)?.color || textColor}
+                    onChange={(e) => {
+                      const newColor = e.target.value;
+                      setTextColor(newColor);
+                      updateTextLayer(activeLayerId, { color: newColor });
+                    }}
                     className="w-full h-10 border border-gray-300 rounded-lg cursor-pointer"
                   />
                 </div>
@@ -325,31 +438,60 @@ export default function Home() {
                     e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='%236b7280' font-family='Arial' font-size='16'%3EUpload an image to create your meme%3C/text%3E%3C/svg%3E";
                   }}
                 />
-                <div className="absolute inset-0 flex flex-col justify-between p-4">
-                  <div className="text-center">
-                    <span 
-                      className="text-white font-bold drop-shadow-lg"
-                      style={{ 
-                        fontSize: `${fontSize}px`,
-                        color: textColor,
-                        textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000'
+                <div className="absolute inset-0">
+                  {textLayers.map((layer) => (
+                    <div
+                      key={layer.id}
+                      className={`absolute cursor-move ${layer.isActive ? 'ring-2 ring-blue-500' : ''}`}
+                      style={{
+                        left: `${layer.x}%`,
+                        top: `${layer.y}%`,
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setActiveLayer(layer.id);
+                        
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const startLayerX = layer.x;
+                        const startLayerY = layer.y;
+                        
+                        const handleMouseMove = (e: MouseEvent) => {
+                          const deltaX = e.clientX - startX;
+                          const deltaY = e.clientY - startY;
+                          
+                          const container = (e.currentTarget as HTMLElement)?.parentElement;
+                          if (container) {
+                            const rect = container.getBoundingClientRect();
+                            const newX = Math.max(0, Math.min(100, startLayerX + (deltaX / rect.width) * 100));
+                            const newY = Math.max(0, Math.min(100, startLayerY + (deltaY / rect.height) * 100));
+                            
+                            updateTextLayer(layer.id, { x: newX, y: newY });
+                          }
+                        };
+                        
+                        const handleMouseUp = () => {
+                          document.removeEventListener('mousemove', handleMouseMove);
+                          document.removeEventListener('mouseup', handleMouseUp);
+                        };
+                        
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
                       }}
                     >
-                      {topText}
-                    </span>
-                  </div>
-                  <div className="text-center">
-                    <span 
-                      className="text-white font-bold drop-shadow-lg"
-                      style={{ 
-                        fontSize: `${fontSize}px`,
-                        color: textColor,
-                        textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000'
-                      }}
-                    >
-                      {bottomText}
-                    </span>
-                  </div>
+                      <span 
+                        className="text-white font-bold drop-shadow-lg select-none"
+                        style={{ 
+                          fontSize: `${layer.fontSize}px`,
+                          color: layer.color,
+                          textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000'
+                        }}
+                      >
+                        {layer.text}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -371,31 +513,29 @@ export default function Home() {
                       e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='128' viewBox='0 0 200 128'%3E%3Crect width='200' height='128' fill='%23f3f4f6'/%3E%3Ctext x='100' y='64' text-anchor='middle' fill='%236b7280' font-family='Arial' font-size='12'%3EPreview%3C/text%3E%3C/svg%3E";
                     }}
                   />
-                  <div className="absolute inset-0 flex flex-col justify-between p-1">
-                    <div className="text-center">
-                      <span 
-                        className="text-white font-bold text-xs drop-shadow-lg"
-                        style={{ 
-                          fontSize: `${Math.max(8, fontSize / 4)}px`,
-                          color: textColor,
-                          textShadow: '1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
+                  <div className="absolute inset-0">
+                    {textLayers.map((layer) => (
+                      <div
+                        key={layer.id}
+                        className="absolute"
+                        style={{
+                          left: `${layer.x}%`,
+                          top: `${layer.y}%`,
+                          transform: 'translate(-50%, -50%)'
                         }}
                       >
-                        {topText}
-                      </span>
-                    </div>
-                    <div className="text-center">
-                      <span 
-                        className="text-white font-bold text-xs drop-shadow-lg"
-                        style={{ 
-                          fontSize: `${Math.max(8, fontSize / 4)}px`,
-                          color: textColor,
-                          textShadow: '1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
-                        }}
-                      >
-                        {bottomText}
-                      </span>
-                    </div>
+                        <span 
+                          className="text-white font-bold text-xs drop-shadow-lg"
+                          style={{ 
+                            fontSize: `${Math.max(8, layer.fontSize / 4)}px`,
+                            color: layer.color,
+                            textShadow: '1px 1px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000'
+                          }}
+                        >
+                          {layer.text}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
