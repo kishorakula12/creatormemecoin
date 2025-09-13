@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, Heart, MessageCircle, Share, RefreshCw } from 'lucide-react';
 
 interface TrendingMeme {
@@ -21,7 +21,7 @@ interface DynamicTrendingProps {
   onMemeSelect: (meme: TrendingMeme) => void;
 }
 
-export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) {
+export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps): React.JSX.Element {
   const [memes, setMemes] = useState<TrendingMeme[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -42,14 +42,16 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
         const realMemes = await response.json();
         setTrendingMemes(realMemes);
       } else {
+        // Add random rotation to make images appear different
+        const imageRotation = Math.floor(Math.random() * 1000);
         // Fallback to community-inspired memes if API fails
         const communityMemes: TrendingMeme[] = [
         {
           id: '1',
           title: 'When Your $CREATOR Meme Goes Viral',
           author: '@CreatorDevSol',
-          thumbnail: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           likes: Math.floor(Math.random() * 2000) + 500,
           comments: Math.floor(Math.random() * 200) + 50,
           shares: Math.floor(Math.random() * 100) + 20,
@@ -61,8 +63,8 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
           id: '2',
           title: 'Me Trying to Explain $CREATOR to My Friends',
           author: '@CryptoCreator',
-          thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           likes: Math.floor(Math.random() * 1500) + 300,
           comments: Math.floor(Math.random() * 150) + 30,
           shares: Math.floor(Math.random() * 80) + 15,
@@ -74,8 +76,8 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
           id: '3',
           title: 'Winning 1 SOL from Creator Community',
           author: '@MemeMaster',
-          thumbnail: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           likes: Math.floor(Math.random() * 3000) + 800,
           comments: Math.floor(Math.random() * 300) + 100,
           shares: Math.floor(Math.random() * 150) + 50,
@@ -87,8 +89,8 @@ export default function DynamicTrending({ onMemeSelect }: DynamicTrendingProps) 
           id: '4',
           title: 'Creator Factory vs Other Meme Generators',
           author: '@FactoryUser',
-          thumbnail: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center',
-          image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           likes: Math.floor(Math.random() * 1200) + 200,
           comments: Math.floor(Math.random() * 100) + 25,
           shares: Math.floor(Math.random() * 60) + 10,
