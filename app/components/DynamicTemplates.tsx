@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RefreshCw, Sparkles } from 'lucide-react';
-import { fetchCommunityData, getCommunityImages } from '../api/community-data';
+import { fetchCommunityData, getCommunityData } from '../api/community-data';
 
 interface Template {
   id: string;
@@ -20,7 +20,7 @@ interface DynamicTemplatesProps {
   onTemplateSelect: (template: Template) => void;
 }
 
-export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesProps) {
+export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesProps): React.JSX.Element {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -30,20 +30,21 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
     setLoading(true);
     try {
       // Try to fetch real data from creator community
-      const realTemplates = await fetchCommunityData('/api/templates');
+      const realTemplates = await getCommunityData('templates');
       
       if (realTemplates && realTemplates.length > 0) {
         setTemplates(realTemplates);
       } else {
-        // Fallback to community-inspired templates with real images
-        const communityImages = await getCommunityImages();
+        // Add random rotation to make images appear different
+        const imageRotation = Math.floor(Math.random() * 1000);
+        // Fallback to diverse community-inspired templates with unique images
         const communityTemplates: Template[] = [
         {
           id: '1',
           name: 'Cosmic Portal',
           category: 'Fantasy & Magic',
-          thumbnail: communityImages?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop&crop=center',
-          image: communityImages?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           tags: ['fantasy', 'magic', 'portal', 'cosmic'],
           trending: true,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -53,8 +54,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '2',
           name: 'Reaching for Stars',
           category: 'Aspiration & Goals',
-          thumbnail: communityImages?.[1] || 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&h=200&fit=crop&crop=center',
-          image: communityImages?.[1] || 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           tags: ['goals', 'aspiration', 'stars', 'motivation'],
           trending: true,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -64,8 +65,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '3',
           name: 'Just Create',
           category: 'Motivation & Action',
-          thumbnail: communityImages?.[2] || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center',
-          image: communityImages?.[2] || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           tags: ['create', 'motivation', 'action', 'inspiration'],
           trending: false,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -75,8 +76,8 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
           id: '4',
           name: 'Sparkle Effect',
           category: 'Highlight & Shine',
-          thumbnail: communityImages?.[3] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=300&h=200&fit=crop&crop=center',
-          image: communityImages?.[3] || 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop&crop=center',
+          thumbnail: `https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
           tags: ['sparkle', 'shine', 'highlight', 'effect'],
           trending: false,
           createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -84,30 +85,52 @@ export default function DynamicTemplates({ onTemplateSelect }: DynamicTemplatesP
         },
         {
           id: '5',
-          name: 'AI Generated Art #1',
-          category: 'AI Generated',
-          thumbnail: '/templates/ai-art-1-thumb.jpg',
-          image: '/templates/ai-art-1.jpg',
-          tags: ['ai', 'generated', 'art', 'new'],
+          name: 'Crypto Moon',
+          category: 'Crypto & Finance',
+          thumbnail: `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
+          tags: ['crypto', 'moon', 'finance', 'trading'],
           trending: true,
-          createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-          likes: Math.floor(Math.random() * 200) + 10
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          likes: Math.floor(Math.random() * 1200) + 200
         },
         {
           id: '6',
-          name: 'Community Creation',
-          category: 'Community',
-          thumbnail: '/templates/community-thumb.jpg',
-          image: '/templates/community.jpg',
-          tags: ['community', 'user', 'generated', 'popular'],
+          name: 'Creative Workspace',
+          category: 'Productivity & Work',
+          thumbnail: `https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
+          tags: ['workspace', 'productivity', 'creative', 'work'],
+          trending: false,
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          likes: Math.floor(Math.random() * 700) + 80
+        },
+        {
+          id: '7',
+          name: 'Digital Art',
+          category: 'Art & Design',
+          thumbnail: `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
+          tags: ['art', 'design', 'digital', 'creative'],
           trending: true,
-          createdAt: new Date(Date.now() - Math.random() * 2 * 24 * 60 * 60 * 1000).toISOString(),
-          likes: Math.floor(Math.random() * 1500) + 200
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          likes: Math.floor(Math.random() * 900) + 150
+        },
+        {
+          id: '8',
+          name: 'Beach Vibes',
+          category: 'Lifestyle & Relaxation',
+          thumbnail: `https://images.unsplash.com/photo-1507525428034-b723cf961dde?w=300&h=200&fit=crop&crop=center&r=${imageRotation}`,
+          image: `https://images.unsplash.com/photo-1507525428034-b723cf961dde?w=800&h=600&fit=crop&crop=center&r=${imageRotation}`,
+          tags: ['beach', 'relax', 'lifestyle', 'vacation'],
+          trending: false,
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          likes: Math.floor(Math.random() * 500) + 40
         }
       ];
 
       // Sort by trending status and likes
-      const sortedTemplates = mockTemplates.sort((a, b) => {
+      const sortedTemplates = communityTemplates.sort((a, b) => {
         if (a.trending && !b.trending) return -1;
         if (!a.trending && b.trending) return 1;
         return b.likes - a.likes;
